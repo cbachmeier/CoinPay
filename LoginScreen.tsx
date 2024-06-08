@@ -1,9 +1,8 @@
-import Constants from "expo-constants";
 import {StatusBar} from "expo-status-bar";
 import React, {useEffect, useState} from "react";
 import {Text, TextInput, View} from "react-native";
 
-import {usePrivy, useLoginWithEmail, useOAuthFlow, useLoginWithSMS} from "@privy-io/expo";
+import {usePrivy, useLoginWithEmail, useLoginWithSMS} from "@privy-io/expo";
 
 import {Button} from "./Button";
 import {styles} from "./styles";
@@ -14,18 +13,16 @@ export const LoginScreen = () => {
 
   const {user} = usePrivy();
   const emailFlow = useLoginWithEmail();
-  const smsFlow = useLoginWithSMS()
-  const oauth = useOAuthFlow();
+  const smsFlow = useLoginWithSMS();
 
   // Side effects which react to login state changes
   useEffect(() => {
     // Report error
     if (smsFlow.state.status === "error") {
       console.error(smsFlow.state.error);
-    } else if (oauth.state.status === "error") {
-      console.error(oauth.state.error);
     }
-  }, [emailFlow.state.status, oauth.state.status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emailFlow.state.status, smsFlow.state.status]);
 
   if (user) {
     return (
@@ -35,45 +32,51 @@ export const LoginScreen = () => {
     );
   }
 
-  const showCodeScreen = smsFlow.state.status === "awaiting-code-input" || smsFlow.state.status === "submitting-code";
+  const showCodeScreen =
+    smsFlow.state.status === "awaiting-code-input" ||
+    smsFlow.state.status === "submitting-code";
 
   return (
     <View style={styles.container}>
       <Text>Login</Text>
       <Text style={{color: "rgba(0,0,0,0.4)", marginVertical: 10}}>
-        (OTP state:{" "}
-        <Text style={{color: "blue"}}>{smsFlow.state.status}</Text>)
+        (OTP state: <Text style={{color: "blue"}}>{smsFlow.state.status}</Text>)
       </Text>
       <StatusBar style="auto" />
-      {!showCodeScreen ? <><TextInput
-        value={phoneNum}
-        onChangeText={setPhoneNum}
-        placeholder="Phone number"
-        style={styles.input}
-        inputMode="tel"
-      />
-      <Button
-        loading={smsFlow.state.status === "sending-code"}
-        onPress={() => smsFlow.sendCode({phone: phoneNum})}
-      >
-        Sign in
-      </Button></> : <><TextInput
-        value={code}
-        onChangeText={setCode}
-        placeholder="Code"
-        style={styles.input}
-        inputMode="numeric"
-      />
-      <Button
-        loading={smsFlow.state.status === "submitting-code"}
-        disabled={smsFlow.state.status !== "awaiting-code-input"}
-        onPress={() => smsFlow.loginWithCode({code})}
-      >
-        Continue
-      </Button></>}
-      
-
-      
+      {!showCodeScreen ? (
+        <>
+          <TextInput
+            value={phoneNum}
+            onChangeText={setPhoneNum}
+            placeholder="Phone number"
+            style={styles.input}
+            inputMode="tel"
+          />
+          <Button
+            loading={smsFlow.state.status === "sending-code"}
+            onPress={() => smsFlow.sendCode({phone: phoneNum})}
+          >
+            Sign in
+          </Button>
+        </>
+      ) : (
+        <>
+          <TextInput
+            value={code}
+            onChangeText={setCode}
+            placeholder="Code"
+            style={styles.input}
+            inputMode="numeric"
+          />
+          <Button
+            loading={smsFlow.state.status === "submitting-code"}
+            disabled={smsFlow.state.status !== "awaiting-code-input"}
+            onPress={() => smsFlow.loginWithCode({code})}
+          >
+            Continue
+          </Button>
+        </>
+      )}
     </View>
   );
 };

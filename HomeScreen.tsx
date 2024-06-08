@@ -3,7 +3,6 @@ import {Text, TextInput, View, ScrollView} from "react-native";
 
 import {
   usePrivy,
-  useOAuthFlow,
   useEmbeddedWallet,
   getUserEmbeddedWallet,
   PrivyEmbeddedWalletProvider,
@@ -33,12 +32,10 @@ const toMainIdentifier = (x: PrivyUser["linked_accounts"][number]) => {
 };
 
 export const HomeScreen = () => {
-  const [password, setPassword] = useState("");
   const [chainId, setChainId] = useState("1");
   const [signedMessages, setSignedMessages] = useState<string[]>([]);
 
   const {logout, user} = usePrivy();
-  const oauth = useOAuthFlow();
   const wallet = useEmbeddedWallet();
   const account = getUserEmbeddedWallet(user);
 
@@ -71,6 +68,7 @@ export const HomeScreen = () => {
         console.error(e);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [account?.address],
   );
 
@@ -81,29 +79,6 @@ export const HomeScreen = () => {
   return (
     <View style={styles.container}>
       <Button onPress={logout}>Logout</Button>
-
-      <View style={{display: "flex", flexDirection: "row", gap: 5, margin: 10}}>
-        {(["github", "google", "discord", "apple"] as const).map((provider) => (
-          <View key={provider}>
-            <Button
-              disabled={oauth.state.status === "loading"}
-              loading={oauth.state.status === "loading"}
-              onPress={() => oauth.start({provider})}
-            >
-              {`Link ${provider}`}
-            </Button>
-          </View>
-        ))}
-      </View>
-
-      {wallet.status === "needs-recovery" && (
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          style={styles.input}
-        />
-      )}
 
       <ScrollView style={{borderColor: "rgba(0,0,0,0.1)", borderWidth: 1}}>
         <View
@@ -173,12 +148,6 @@ export const HomeScreen = () => {
                   Switch Chain
                 </Button>
               </>
-            )}
-
-            {wallet.status === "needs-recovery" && (
-              <Button onPress={() => wallet.recover(password)}>
-                Recover Wallet
-              </Button>
             )}
           </View>
 
