@@ -1,75 +1,45 @@
-import React, {useState, useCallback} from "react";
-import {Text, TextInput, View, ScrollView} from "react-native";
-
-import {
-  usePrivy,
-  useEmbeddedWallet,
-  getUserEmbeddedWallet,
-  PrivyEmbeddedWalletProvider,
-} from "@privy-io/expo";
-import {PrivyUser} from "@privy-io/public-api";
+import React, {useState} from "react";
+import {Text, View, StyleSheet, TouchableOpacity} from "react-native";
+import {usePrivy} from "@privy-io/expo";
 
 import {Button} from "./Button";
 import {styles} from "./styles";
 
-const toMainIdentifier = (x: PrivyUser["linked_accounts"][number]) => {
-  if (x.type === "phone") {
-    return x.phoneNumber;
-  }
-  if (x.type === "email" || x.type === "wallet") {
-    return x.address;
-  }
-
-  if (x.type === "twitter_oauth" || x.type === "tiktok_oauth") {
-    return x.username;
-  }
-
-  if (x.type === "custom_auth") {
-    return x.custom_user_id;
-  }
-
-  return x.email;
-};
-
 export const HomeScreen = () => {
-  const [chainId, setChainId] = useState("1");
-  const [signedMessages, setSignedMessages] = useState<string[]>([]);
-
   const {logout, user} = usePrivy();
-  const wallet = useEmbeddedWallet();
-  const account = getUserEmbeddedWallet(user);
+  const [input, setInput] = useState("");
 
-  const signMessage = useCallback(
-    async (provider: PrivyEmbeddedWalletProvider) => {
-      try {
-        const message = await provider.request({
-          method: "personal_sign",
-          params: [`0x0${Date.now()}`, account?.address],
-        });
-        if (message) {
-          setSignedMessages((prev) => prev.concat(message));
-        }
-      } catch (e) {
-        console.error(e);
+  const handlePress = (val: string) => {
+    setInput((prevInput) => {
+      // Prevent adding more than one decimal point
+      if (val === "." && prevInput.includes(".")) {
+        return prevInput;
       }
-    },
-    [account?.address],
-  );
+      // Prevent more than 2 digits after decimal point
+      if (
+        val !== "." &&
+        prevInput.includes(".") &&
+        prevInput.split(".")[1].length >= 2
+      ) {
+        return prevInput;
+      }
+      return prevInput === "0" && val !== "." ? val : prevInput + val;
+    });
+  };
 
-  const switchChain = useCallback(
-    async (provider: PrivyEmbeddedWalletProvider, id: string) => {
-      try {
-        await provider.request({
-          method: "wallet_switchEthereumChain",
-          params: [{chainId: id}],
-        });
-        alert(`Chain switched to ${id} successfully`);
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [account?.address],
+  const handleBackspace = () => {
+    setInput((prevInput) =>
+      prevInput.length > 1 ? prevInput.slice(0, -1) : "0",
+    );
+  };
+
+  const renderButton = (val: string) => (
+    <TouchableOpacity
+      style={localStyles.button}
+      onPress={() => handlePress(val)}
+    >
+      <Text style={localStyles.buttonText}>{val}</Text>
+    </TouchableOpacity>
   );
 
   if (!user) {
@@ -80,101 +50,71 @@ export const HomeScreen = () => {
     <View style={styles.container}>
       <Button onPress={logout}>Logout</Button>
 
-      <ScrollView style={{borderColor: "rgba(0,0,0,0.1)", borderWidth: 1}}>
-        <View
-          style={{
-            padding: 20,
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <View>
-            <Text style={{fontWeight: "bold"}}>User ID</Text>
-            <Text>{user.id}</Text>
-          </View>
-
-          <View>
-            <Text style={{fontWeight: "bold"}}>Linked accounts</Text>
-            {user?.linked_accounts.length ? (
-              <View style={{display: "flex", flexDirection: "column"}}>
-                {user?.linked_accounts?.map((m) => (
-                  <Text
-                    key={m.verified_at}
-                    style={{
-                      color: "rgba(0,0,0,0.5)",
-                      fontSize: 12,
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {m.type}: {toMainIdentifier(m)}
-                  </Text>
-                ))}
-              </View>
-            ) : null}
-          </View>
-
-          <View>
-            {account?.address && (
-              <>
-                <Text style={{fontWeight: "bold"}}>Embedded Wallet</Text>
-                <Text>{account?.address}</Text>
-              </>
-            )}
-
-            {wallet.status === "connecting" && <Text>Loading wallet...</Text>}
-
-            {wallet.status === "error" && <Text>{wallet.error}</Text>}
-
-            {wallet.status === "not-created" && (
-              <Button onPress={() => wallet.create()}>Create Wallet</Button>
-            )}
-
-            {wallet.status === "connected" && (
-              <Button onPress={() => signMessage(wallet.provider)}>
-                Sign Message
-              </Button>
-            )}
-
-            {wallet.status === "connected" && (
-              <>
-                <TextInput
-                  value={chainId}
-                  onChangeText={setChainId}
-                  placeholder="Chain Id"
-                  style={styles.inputSm}
-                />
-                <Button onPress={() => switchChain(wallet.provider, chainId)}>
-                  Switch Chain
-                </Button>
-              </>
-            )}
-          </View>
-
-          <View style={{display: "flex", flexDirection: "column"}}>
-            {signedMessages.map((m) => (
-              <React.Fragment key={m}>
-                <Text
-                  style={{
-                    color: "rgba(0,0,0,0.5)",
-                    fontSize: 12,
-                    fontStyle: "italic",
-                  }}
-                >
-                  {m}
-                </Text>
-                <View
-                  style={{
-                    marginVertical: 5,
-                    borderBottomWidth: 1,
-                    borderBottomColor: "rgba(0,0,0,0.2)",
-                  }}
-                />
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-      </ScrollView>
+      <View style={localStyles.inputContainer}>
+        <Text style={localStyles.inputText}>${input}</Text>
+      </View>
+      <View style={localStyles.buttonContainer}>
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0"].map(
+          renderButton,
+        )}
+        <TouchableOpacity style={localStyles.button} onPress={handleBackspace}>
+          <Text style={localStyles.buttonText}>&lt;</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={localStyles.actionButtonContainer}>
+        <TouchableOpacity style={localStyles.actionButton}>
+          <Text style={localStyles.buttonText}>Request</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={localStyles.actionButton}>
+          <Text style={localStyles.buttonText}>Pay</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
+
+const localStyles = StyleSheet.create({
+  inputContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignSelf: "stretch",
+    paddingHorizontal: 20,
+  },
+  inputText: {
+    fontSize: 48,
+    textAlign: "center",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    width: "80%",
+  },
+  button: {
+    width: "30%",
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#000",
+    marginBottom: 10,
+  },
+  buttonText: {
+    fontSize: 24,
+  },
+  actionButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%",
+    marginBottom: 20,
+  },
+  actionButton: {
+    width: "45%",
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#000",
+    backgroundColor: "#007BFF",
+  },
+});

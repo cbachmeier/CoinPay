@@ -4,6 +4,7 @@ import "@ethersproject/shims";
 import React from "react";
 import {SafeAreaView, View, Text} from "react-native";
 import {PrivyProvider} from "@privy-io/expo";
+import {base, baseSepolia} from "viem/chains";
 
 import {Wrapper} from "./Wrapper";
 
@@ -24,7 +25,10 @@ export default function App() {
     );
   }
   return (
-    <PrivyProvider appId={process.env.EXPO_PUBLIC_PRIVY_APP_ID}>
+    <PrivyProvider
+      appId={process.env.EXPO_PUBLIC_PRIVY_APP_ID}
+      supportedChains={[baseSepolia, base]}
+    >
       <SafeAreaView style={{flex: 1, margin: 10}}>
         <Wrapper />
       </SafeAreaView>
