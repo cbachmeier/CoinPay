@@ -1,16 +1,14 @@
 import "fast-text-encoding";
 import "react-native-get-random-values";
 import "@ethersproject/shims";
-import Constants from "expo-constants";
 import React from "react";
 import {SafeAreaView, View, Text} from "react-native";
-
 import {PrivyProvider} from "@privy-io/expo";
 
 import {Wrapper} from "./Wrapper";
 
 export default function App() {
-  if (Constants.expoConfig?.extra?.privyAppId === "<your-app-id>") {
+  if (!process.env.EXPO_PUBLIC_PRIVY_APP_ID) {
     return (
       <SafeAreaView>
         <View
@@ -26,7 +24,7 @@ export default function App() {
     );
   }
   return (
-    <PrivyProvider appId={Constants.expoConfig?.extra?.privyAppId}>
+    <PrivyProvider appId={process.env.EXPO_PUBLIC_PRIVY_APP_ID}>
       <SafeAreaView style={{flex: 1, margin: 10}}>
         <Wrapper />
       </SafeAreaView>
