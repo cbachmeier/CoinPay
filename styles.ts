@@ -20,4 +20,47 @@ export const styles = StyleSheet.create({
     borderColor: "#111",
     borderWidth: 1,
   },
+  inputContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignSelf: "stretch",
+    paddingHorizontal: 20,
+  },
+  inputText: {
+    fontSize: 48,
+    textAlign: "center",
+  },
+  keypadContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    width: "80%",
+  },
+  keypadButton: {
+    width: "30%",
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#000",
+    marginBottom: 10,
+  },
+  keypadButtonText: {
+    fontSize: 24,
+  },
+  actionButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%",
+    marginBottom: 20,
+  },
+  actionButton: {
+    width: "45%",
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#000",
+    backgroundColor: "#007BFF",
+  },
 });

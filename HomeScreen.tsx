@@ -35,10 +35,10 @@ export const HomeScreen = () => {
 
   const renderButton = (val: string) => (
     <TouchableOpacity
-      style={localStyles.button}
+      style={styles.keypadButton}
       onPress={() => handlePress(val)}
     >
-      <Text style={localStyles.buttonText}>{val}</Text>
+      <Text style={styles.keypadButtonText}>{val}</Text>
     </TouchableOpacity>
   );
 
@@ -50,71 +50,25 @@ export const HomeScreen = () => {
     <View style={styles.container}>
       <Button onPress={logout}>Logout</Button>
 
-      <View style={localStyles.inputContainer}>
-        <Text style={localStyles.inputText}>${input}</Text>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputText}>${input}</Text>
       </View>
-      <View style={localStyles.buttonContainer}>
+      <View style={styles.keypadContainer}>
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0"].map(
           renderButton,
         )}
-        <TouchableOpacity style={localStyles.button} onPress={handleBackspace}>
-          <Text style={localStyles.buttonText}>&lt;</Text>
+        <TouchableOpacity style={styles.keypadButton} onPress={handleBackspace}>
+          <Text style={styles.keypadButtonText}>&lt;</Text>
         </TouchableOpacity>
       </View>
-      <View style={localStyles.actionButtonContainer}>
-        <TouchableOpacity style={localStyles.actionButton}>
-          <Text style={localStyles.buttonText}>Request</Text>
+      <View style={styles.actionButtonContainer}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.keypadButtonText}>Request</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={localStyles.actionButton}>
-          <Text style={localStyles.buttonText}>Pay</Text>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.keypadButtonText}>Pay</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
-const localStyles = StyleSheet.create({
-  inputContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignSelf: "stretch",
-    paddingHorizontal: 20,
-  },
-  inputText: {
-    fontSize: 48,
-    textAlign: "center",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    width: "80%",
-  },
-  button: {
-    width: "30%",
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#000",
-    marginBottom: 10,
-  },
-  buttonText: {
-    fontSize: 24,
-  },
-  actionButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
-    marginBottom: 20,
-  },
-  actionButton: {
-    width: "45%",
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#000",
-    backgroundColor: "#007BFF",
-  },
-});
