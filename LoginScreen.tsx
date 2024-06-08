@@ -43,8 +43,7 @@ export const LoginScreen = () => {
         <Text style={{color: "blue"}}>{smsFlow.state.status}</Text>)
       </Text>
       <StatusBar style="auto" />
-
-      <TextInput
+      {smsFlow.state.status !== "awaiting-code-input" ? <><TextInput
         value={phoneNum}
         onChangeText={setPhoneNum}
         placeholder="Phone number"
@@ -56,9 +55,7 @@ export const LoginScreen = () => {
         onPress={() => smsFlow.sendCode({phone: phoneNum})}
       >
         Send Code
-      </Button>
-
-      <TextInput
+      </Button></> : <><TextInput
         value={code}
         onChangeText={setCode}
         placeholder="Code"
@@ -66,12 +63,15 @@ export const LoginScreen = () => {
         inputMode="numeric"
       />
       <Button
-        loading={smsFlow.state.status === "submitting-code"}
+        // loading={smsFlow.state.status === "submitting-code"}
         disabled={smsFlow.state.status !== "awaiting-code-input"}
         onPress={() => smsFlow.loginWithCode({code})}
       >
         Login
-      </Button>
+      </Button></>}
+      
+
+      
     </View>
   );
 };
