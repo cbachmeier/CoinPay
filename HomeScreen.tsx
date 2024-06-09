@@ -120,8 +120,7 @@ export const HomeScreen = () => {
       setIsPending(false);
       console.error(e);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account?.address, balance, input, recipient, wallet.status]);
+  }, [account?.address, balance, input, recipient, wallet]);
 
   if (!user) {
     return null;

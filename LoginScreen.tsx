@@ -2,7 +2,7 @@ import {StatusBar} from "expo-status-bar";
 import React, {useEffect, useState} from "react";
 import {Text, TextInput, View} from "react-native";
 
-import {usePrivy, useLoginWithEmail, useLoginWithSMS} from "@privy-io/expo";
+import {usePrivy, useLoginWithSMS} from "@privy-io/expo";
 
 import {Button} from "./Button";
 import {styles} from "./styles";
@@ -12,7 +12,6 @@ export const LoginScreen = () => {
   const [code, setCode] = useState("");
 
   const {user} = usePrivy();
-  const emailFlow = useLoginWithEmail();
   const smsFlow = useLoginWithSMS();
 
   // Side effects which react to login state changes
@@ -21,8 +20,7 @@ export const LoginScreen = () => {
     if (smsFlow.state.status === "error") {
       console.error(smsFlow.state.error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailFlow.state.status, smsFlow.state.status]);
+  }, [smsFlow.state]);
 
   if (user) {
     return (
