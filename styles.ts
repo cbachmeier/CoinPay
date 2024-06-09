@@ -63,4 +63,29 @@ export const styles = StyleSheet.create({
     borderColor: "#000",
     backgroundColor: "#007BFF",
   },
+  balanceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    width: "80%",
+  },
+  labelText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#007BFF",
+  },
+  balanceText: {
+    fontSize: 16,
+    width: "auto",
+  },
+  recipientInput: {
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    marginTop: 20,
+    marginBottom: 20,
+    paddingLeft: 10,
+    width: "80%",
+  },
 });
