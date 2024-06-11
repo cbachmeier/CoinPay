@@ -1,9 +1,9 @@
 import {PublicClient, createPublicClient, http} from "viem";
-import {mainnet} from "viem/chains";
+import {baseSepolia} from "viem/chains";
 import {PropsWithChildren, createContext, useContext} from "react";
 
 export const publicClient = createPublicClient({
-  chain: mainnet,
+  chain: baseSepolia,
   transport: http(),
 });
 

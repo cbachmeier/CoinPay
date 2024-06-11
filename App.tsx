@@ -9,6 +9,7 @@ import {base, baseSepolia} from "viem/chains";
 import {Wrapper} from "./screens/Wrapper";
 import ViewWalletClientProvider from "./providers/ViemWalletClientProvider";
 import ViewPublicProvider from "./providers/ViemPublicClient";
+import AlchemyProvider from "./providers/AlchemyProvider";
 
 export default function App() {
   if (!process.env.EXPO_PUBLIC_PRIVY_APP_ID) {
@@ -33,9 +34,11 @@ export default function App() {
     >
       <ViewWalletClientProvider>
         <ViewPublicProvider>
-          <SafeAreaView style={{flex: 1, margin: 10}}>
-            <Wrapper />
-          </SafeAreaView>
+          <AlchemyProvider>
+            <SafeAreaView style={{flex: 1, margin: 10}}>
+              <Wrapper />
+            </SafeAreaView>
+          </AlchemyProvider>
         </ViewPublicProvider>
       </ViewWalletClientProvider>
     </PrivyProvider>
