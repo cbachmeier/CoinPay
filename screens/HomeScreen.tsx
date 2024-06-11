@@ -13,10 +13,10 @@ import {
 } from "@privy-io/expo";
 import {ethers} from "ethers";
 
-import {Button} from "./Button";
-import {styles} from "./styles";
-import {BASE_SEPOLIA_USDC_ADDRESS} from "./constants";
-import {usePublicClient} from "./ViemPublicClient";
+import {Button} from "../components/Button";
+import {styles} from "../utils/styles";
+import {BASE_SEPOLIA_USDC_ADDRESS} from "../utils/constants";
+import {usePublicClient} from "../providers/ViemPublicClient";
 import {isAddress} from "viem";
 import {normalize} from "viem/ens";
 

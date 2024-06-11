@@ -4,8 +4,8 @@ import {Text, TextInput, View} from "react-native";
 
 import {usePrivy, useLoginWithSMS} from "@privy-io/expo";
 
-import {Button} from "./Button";
-import {styles} from "./styles";
+import {Button} from "../components/Button";
+import {styles} from "../utils/styles";
 
 export const LoginScreen = () => {
   const [phoneNum, setPhoneNum] = useState("");

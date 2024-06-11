@@ -6,9 +6,9 @@ import {SafeAreaView, View, Text} from "react-native";
 import {PrivyProvider} from "@privy-io/expo";
 import {base, baseSepolia} from "viem/chains";
 
-import {Wrapper} from "./Wrapper";
-import ViewWalletClientProvider from "./ViemWalletClientProvider";
-import ViewPublicProvider from "./ViemPublicClient";
+import {Wrapper} from "./screens/Wrapper";
+import ViewWalletClientProvider from "./providers/ViemWalletClientProvider";
+import ViewPublicProvider from "./providers/ViemPublicClient";
 
 export default function App() {
   if (!process.env.EXPO_PUBLIC_PRIVY_APP_ID) {
