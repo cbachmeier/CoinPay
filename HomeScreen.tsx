@@ -16,6 +16,9 @@ import {ethers} from "ethers";
 import {Button} from "./Button";
 import {styles} from "./styles";
 import {BASE_SEPOLIA_USDC_ADDRESS} from "./constants";
+import {usePublicClient} from "./ViemPublicClient";
+import {isAddress} from "viem";
+import {normalize} from "viem/ens";
 
 export const HomeScreen = () => {
   const {logout, user} = usePrivy();
@@ -25,8 +28,13 @@ export const HomeScreen = () => {
   const [recipient, setRecipient] = useState(
     "0x79ea449C3375ED1A9d7D99F8068209eA748C6D42",
   );
+  const [recipientAddress, setRecipientAddress] = useState<
+    `0x${string}` | null
+  >(null);
   const wallet = useEmbeddedWallet();
   const account = getUserEmbeddedWallet(user);
+  const publicClient = usePublicClient();
+  const [isValidRecipient, setIsValidRecipient] = useState<boolean>(false);
 
   const handlePress = (val: string) => {
     setInput((prevInput) => {
@@ -56,6 +64,7 @@ export const HomeScreen = () => {
     <TouchableOpacity
       style={styles.keypadButton}
       onPress={() => handlePress(val)}
+      key={val}
     >
       <Text style={styles.keypadButtonText}>{val}</Text>
     </TouchableOpacity>
@@ -108,19 +117,47 @@ export const HomeScreen = () => {
 
       const amountToSend = ethers.utils.parseUnits(input, 6);
       const transactionResponse = await contract.transfer(
-        recipient,
+        recipientAddress,
         amountToSend,
       );
       await transactionResponse.wait(); // wait for transaction to be mined
       setIsPending(false);
       setInput("0");
 
-      alert(`Sent $${input} to ${recipient} successfully`);
+      alert(`Sent $${input} to ${recipientAddress} successfully`);
     } catch (e) {
       setIsPending(false);
       console.error(e);
     }
-  }, [account?.address, balance, input, recipient, wallet]);
+  }, [account?.address, balance, input, recipientAddress, wallet]);
+
+  const handleRecipientChange = useCallback(
+    async (text: string) => {
+      setRecipient(text);
+      if (text) {
+        if (isAddress(text)) {
+          setRecipientAddress(text);
+          setIsValidRecipient(true);
+        } else {
+          try {
+            const ensAddress = await publicClient?.getEnsAddress({
+              name: normalize(text),
+            });
+            if (ensAddress) {
+              setRecipientAddress(ensAddress);
+              setIsValidRecipient(true);
+            } else {
+              setIsValidRecipient(false);
+            }
+          } catch (e) {
+            console.error(e);
+            setIsValidRecipient(false);
+          }
+        }
+      }
+    },
+    [publicClient],
+  );
 
   if (!user) {
     return null;
@@ -131,7 +168,7 @@ export const HomeScreen = () => {
       <Button onPress={logout}>Logout</Button>
       <TextInput
         style={styles.recipientInput}
-        onChangeText={setRecipient}
+        onChangeText={handleRecipientChange}
         value={recipient}
         placeholder="Enter recipient address"
       />
@@ -152,10 +189,17 @@ export const HomeScreen = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.actionButtonContainer}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity
+          disabled={!isValidRecipient}
+          style={styles.actionButton}
+        >
           <Text style={styles.keypadButtonText}>Request</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={payUSDC}>
+        <TouchableOpacity
+          disabled={!isValidRecipient}
+          style={styles.actionButton}
+          onPress={payUSDC}
+        >
           {isPending ? (
             <ActivityIndicator size="small" color="rgba(0,0,0,0.3)" />
           ) : (
