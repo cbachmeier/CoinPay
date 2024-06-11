@@ -19,9 +19,11 @@ import {BASE_SEPOLIA_USDC_ADDRESS} from "../utils/constants";
 import {usePublicClient} from "../providers/ViemPublicClient";
 import {isAddress} from "viem";
 import {normalize} from "viem/ens";
+import {useAtom} from "jotai";
+import {pageAtom} from "./Wrapper";
 
 export const HomeScreen = () => {
-  const {logout, user} = usePrivy();
+  const {user} = usePrivy();
   const [input, setInput] = useState("0");
   const [balance, setBalance] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -35,6 +37,7 @@ export const HomeScreen = () => {
   const account = getUserEmbeddedWallet(user);
   const publicClient = usePublicClient();
   const [isValidRecipient, setIsValidRecipient] = useState<boolean>(false);
+  const [, setPage] = useAtom(pageAtom);
 
   const handlePress = (val: string) => {
     setInput((prevInput) => {
@@ -165,7 +168,7 @@ export const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Button onPress={logout}>Logout</Button>
+      <Button onPress={() => setPage("profile")}>Profile</Button>
       <TextInput
         style={styles.recipientInput}
         onChangeText={handleRecipientChange}
