@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useState} from "react";
 import {
   Text,
   View,
@@ -6,41 +6,31 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-import {
-  getUserEmbeddedWallet,
-  useEmbeddedWallet,
-  usePrivy,
-} from "@privy-io/expo";
-import {ethers} from "ethers";
+import {usePrivy} from "@privy-io/expo";
 
 import {Button} from "../components/Button";
 import {styles} from "../utils/styles";
-import {BASE_SEPOLIA_USDC_ADDRESS} from "../utils/constants";
-import {usePublicClient} from "../providers/ViemPublicClient";
 import {isAddress} from "viem";
-import {normalize} from "viem/ens";
 import {useAtom} from "jotai";
 import {pageAtom} from "./Wrapper";
+import {useUSDCBalance} from "../hooks/useUSDCBalance";
+import {usePayWithComment} from "../hooks/usePayWithComment";
+import {Account} from "../utils/types";
+import {useENS} from "../hooks/useENS";
 
 export const HomeScreen = () => {
   const {user} = usePrivy();
-  const [input, setInput] = useState("0");
-  const [balance, setBalance] = useState("");
-  const [isPending, setIsPending] = useState(false);
-  const [recipient, setRecipient] = useState(
-    "0x79ea449C3375ED1A9d7D99F8068209eA748C6D42",
-  );
-  const [recipientAddress, setRecipientAddress] = useState<
-    `0x${string}` | null
-  >(null);
-  const wallet = useEmbeddedWallet();
-  const account = getUserEmbeddedWallet(user);
-  const publicClient = usePublicClient();
+  const [amount, setAmount] = useState("0");
+  const [search, setSearch] = useState("");
+  const [recipient, setRecipient] = useState<Account | null>(null);
   const [isValidRecipient, setIsValidRecipient] = useState<boolean>(false);
   const [, setPage] = useAtom(pageAtom);
+  const {balance} = useUSDCBalance();
+  const {payWithComment, isPending} = usePayWithComment();
+  const {getAccountForAddress, getAccountForUsername} = useENS();
 
   const handlePress = (val: string) => {
-    setInput((prevInput) => {
+    setAmount((prevInput) => {
       // Prevent adding more than one decimal point
       if (val === "." && prevInput.includes(".")) {
         return prevInput;
@@ -58,7 +48,7 @@ export const HomeScreen = () => {
   };
 
   const handleBackspace = () => {
-    setInput((prevInput) =>
+    setAmount((prevInput) =>
       prevInput.length > 1 ? prevInput.slice(0, -1) : "0",
     );
   };
@@ -73,81 +63,21 @@ export const HomeScreen = () => {
     </TouchableOpacity>
   );
 
-  const getERC20Balance = useCallback(async () => {
-    if (wallet.status !== "connected" || !account?.address) {
-      return;
-    }
-    try {
-      const provider = new ethers.providers.Web3Provider(wallet.provider);
-      const contractAddress = BASE_SEPOLIA_USDC_ADDRESS;
-      const contract = new ethers.Contract(
-        contractAddress,
-        ["function balanceOf(address account) public view returns (uint256)"],
-        provider,
-      );
-
-      const balance = await contract.balanceOf(account.address);
-      const formattedBalance = ethers.utils.formatUnits(balance, 6);
-
-      setBalance(parseFloat(formattedBalance).toFixed(2));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [account?.address, wallet]);
-
-  useEffect(() => {
-    getERC20Balance();
-  }, [getERC20Balance]);
-
-  const payUSDC = useCallback(async () => {
-    if (
-      wallet.status !== "connected" ||
-      !account?.address ||
-      !parseFloat(balance)
-    ) {
-      console.log("Wallet not connected or balance is 0");
-      return;
-    }
-    try {
-      setIsPending(true);
-      const provider = new ethers.providers.Web3Provider(wallet.provider);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
-        BASE_SEPOLIA_USDC_ADDRESS,
-        ["function transfer(address to, uint256 value) public returns(bool)"],
-        signer,
-      );
-
-      const amountToSend = ethers.utils.parseUnits(input, 6);
-      const transactionResponse = await contract.transfer(
-        recipientAddress,
-        amountToSend,
-      );
-      await transactionResponse.wait(); // wait for transaction to be mined
-      setIsPending(false);
-      setInput("0");
-
-      alert(`Sent $${input} to ${recipientAddress} successfully`);
-    } catch (e) {
-      setIsPending(false);
-      console.error(e);
-    }
-  }, [account?.address, balance, input, recipientAddress, wallet]);
-
   const handleRecipientChange = useCallback(
     async (text: string) => {
-      setRecipient(text);
+      setSearch(text);
       if (text) {
         if (isAddress(text)) {
-          setRecipientAddress(text);
-          setIsValidRecipient(true);
+          const account = await getAccountForAddress(text);
+          if (account) {
+            setRecipient(account);
+            setIsValidRecipient(true);
+          }
         } else {
           try {
-            const ensAddress = await publicClient?.getEnsAddress({
-              name: normalize(text),
-            });
-            if (ensAddress) {
-              setRecipientAddress(ensAddress);
+            const account = await getAccountForUsername(text);
+            if (account) {
+              setRecipient(account);
               setIsValidRecipient(true);
             } else {
               setIsValidRecipient(false);
@@ -159,7 +89,7 @@ export const HomeScreen = () => {
         }
       }
     },
-    [publicClient],
+    [getAccountForAddress, getAccountForUsername],
   );
 
   if (!user) {
@@ -170,14 +100,17 @@ export const HomeScreen = () => {
     <View style={styles.container}>
       <Button onPress={() => setPage("profile")}>Profile</Button>
       <TextInput
-        style={styles.recipientInput}
+        style={[
+          styles.recipientInput,
+          isValidRecipient ? {borderColor: "green"} : {borderColor: "red"},
+        ]}
         onChangeText={handleRecipientChange}
-        value={recipient}
-        placeholder="Enter recipient address"
+        value={search}
+        placeholder="Enter recipient"
       />
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputText}>${input}</Text>
+        <Text style={styles.inputText}>${amount}</Text>
       </View>
       <View style={styles.balanceContainer}>
         <Text style={styles.labelText}>Balance:</Text>
@@ -201,7 +134,13 @@ export const HomeScreen = () => {
         <TouchableOpacity
           disabled={!isValidRecipient}
           style={styles.actionButton}
-          onPress={payUSDC}
+          onPress={() =>
+            payWithComment({
+              recipient,
+              amount,
+              comment: "the quick brown fox jumps over the lazy dog 🐶",
+            })
+          }
         >
           {isPending ? (
             <ActivityIndicator size="small" color="rgba(0,0,0,0.3)" />

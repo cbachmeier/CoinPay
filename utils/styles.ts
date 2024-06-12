@@ -88,4 +88,41 @@ export const styles = StyleSheet.create({
     paddingLeft: 10,
     width: "80%",
   },
+  topHalf: {
+    flex: 0.5,
+  },
+  bottomHalf: {
+    flex: 0.5,
+  },
+  transaction: {
+    flexDirection: "column",
+    width: "100%",
+    marginBottom: 10,
+  },
+  address: {
+    flex: 1,
+  },
+  valueSend: {
+    color: "red",
+  },
+  valueReceive: {
+    color: "green",
+  },
+  description: {
+    fontStyle: "italic",
+  },
+  transactionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 5,
+  },
+  divider: {
+    borderBottomColor: "gray",
+    borderBottomWidth: 1,
+    width: "90%",
+    alignSelf: "center",
+    marginVertical: 10,
+  },
 });
