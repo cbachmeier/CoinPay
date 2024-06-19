@@ -1,12 +1,11 @@
 import {Text, ActivityIndicator, View} from "react-native";
-import {atom, useAtom} from "jotai";
+import {useAtom} from "jotai";
 import {usePrivy} from "@privy-io/expo";
 
 import {HomeScreen} from "./HomeScreen";
 import {LoginScreen} from "./LoginScreen";
 import {ProfileScreen} from "./ProfileScreen";
-
-export const pageAtom = atom<"home" | "profile">("home");
+import {pageAtom} from "../utils/navigation";
 
 export const Wrapper = () => {
   const {user, isReady} = usePrivy();

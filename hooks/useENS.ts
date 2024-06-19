@@ -2,7 +2,6 @@ import {normalize} from "viem/ens";
 import {usePublicClient} from "../providers/ViemPublicClient";
 import {Account} from "../utils/types";
 import {isAddress} from "viem";
-import blockies from "ethereum-blockies";
 import {shortenAddress} from "../utils";
 
 export const useENS = () => {
@@ -33,7 +32,6 @@ export const useENS = () => {
     const ensAddress = await publicClient?.getEnsAddress({
       name: normalize(username),
     });
-    console.log({ensAddress});
     if (!ensAddress) {
       return null;
     }

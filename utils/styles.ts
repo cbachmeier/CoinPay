@@ -125,4 +125,17 @@ export const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 10,
   },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  avatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+    backgroundColor: "gray",
+  },
 });

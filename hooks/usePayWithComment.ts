@@ -30,7 +30,8 @@ export const usePayWithComment = () => {
         wallet.status !== "connected" ||
         !account?.address ||
         !parseFloat(balance) ||
-        !recipient
+        !recipient ||
+        !process.env.EXPO_PUBLIC_COMMENT_ENDPOINT
       ) {
         console.log("Wallet not connected or balance is 0");
         return;
@@ -39,6 +40,7 @@ export const usePayWithComment = () => {
         setIsPending(true);
         const provider = new ethers.providers.Web3Provider(wallet.provider);
         const signer = provider.getSigner();
+        const senderAddress = await signer.getAddress();
         const contract = new ethers.Contract(
           BASE_SEPOLIA_USDC_ADDRESS,
           ["function transfer(address to, uint256 value) public returns(bool)"],
@@ -53,32 +55,27 @@ export const usePayWithComment = () => {
         await transactionResponse.wait(); // wait for transaction to be mined
         const payHash = transactionResponse.hash;
 
-        // Prepare comment data
-        const data = {
-          payHash,
-          avatar: recipient.avatar || null,
-          username: recipient.username || null,
-          comment: comment || null,
-        };
-
-        // Encode data
-        const encodedData = ethers.utils.defaultAbiCoder.encode(
-          ["string", "string", "string", "string"],
-          [data.payHash, data.avatar, data.username, data.comment],
-        );
-
-        // Create a new transaction with no value
-        const transaction = {
-          to: recipient.address, // the address to send to
-          value: ethers.utils.parseEther("0"), // the amount of ether to send
-          data: encodedData, // optional data field
-        };
-
-        // Send the transaction
-        const commentTransaction = await signer.sendTransaction(transaction);
-
-        // Wait for the transaction to be mined
-        await commentTransaction.wait();
+        // Store the comment data in the localhost endpoint
+        fetch(process.env.EXPO_PUBLIC_COMMENT_ENDPOINT, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            hash: payHash,
+            avatar: recipient.avatar,
+            username: recipient.username,
+            comment: comment,
+            address: senderAddress,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
 
         setIsPending(false);
 

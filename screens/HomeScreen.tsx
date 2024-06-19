@@ -12,11 +12,11 @@ import {Button} from "../components/Button";
 import {styles} from "../utils/styles";
 import {isAddress} from "viem";
 import {useAtom} from "jotai";
-import {pageAtom} from "./Wrapper";
 import {useUSDCBalance} from "../hooks/useUSDCBalance";
 import {usePayWithComment} from "../hooks/usePayWithComment";
 import {Account} from "../utils/types";
 import {useENS} from "../hooks/useENS";
+import {pageAtom} from "../utils/navigation";
 
 export const HomeScreen = () => {
   const {user} = usePrivy();
@@ -62,7 +62,7 @@ export const HomeScreen = () => {
       <Text style={styles.keypadButtonText}>{val}</Text>
     </TouchableOpacity>
   );
-
+  // TODO: add debounce
   const handleRecipientChange = useCallback(
     async (text: string) => {
       setSearch(text);
