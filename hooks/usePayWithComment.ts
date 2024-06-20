@@ -11,7 +11,9 @@ import {Account} from "../utils/types";
 
 export const usePayWithComment = () => {
   const {user} = usePrivy();
-  const [isPending, setIsPending] = useState(false);
+  const [status, setStatus] = useState<
+    "pending" | "success" | "error" | undefined
+  >(undefined);
   const wallet = useEmbeddedWallet();
   const account = getUserEmbeddedWallet(user);
   const {balance} = useUSDCBalance();
@@ -37,7 +39,7 @@ export const usePayWithComment = () => {
         return;
       }
       try {
-        setIsPending(true);
+        setStatus("pending");
         const provider = new ethers.providers.Web3Provider(wallet.provider);
         const signer = provider.getSigner();
         const senderAddress = await signer.getAddress();
@@ -77,15 +79,15 @@ export const usePayWithComment = () => {
             console.error("Error:", error);
           });
 
-        setIsPending(false);
+        setStatus("success");
 
         alert(`Sent $${amount} to ${recipient.address} successfully`);
       } catch (e) {
-        setIsPending(false);
+        setStatus("error");
         console.error(e);
       }
     },
     [wallet, account?.address, balance],
   );
-  return {payWithComment, isPending};
+  return {payWithComment, status};
 };

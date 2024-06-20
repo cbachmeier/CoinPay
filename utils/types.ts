@@ -6,6 +6,22 @@ export type Account = {
   username?: string;
 };
 
+/**
+ * Requests should appear in feed with a prompt to pay or decline
+ * Once paid or declined, the request should be removed from the recipient feed
+ * If paid becomes a tx w/ or w/o a comment
+ */
+
+export type Request = {
+  origin: string;
+  recipient: string;
+  amount: string;
+  avatar?: string;
+  username?: string;
+  comment?: string;
+  status: "pending" | "paid" | "declined";
+};
+
 export type Comment = {
   hash: string;
   avatar?: string;

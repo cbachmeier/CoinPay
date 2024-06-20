@@ -5,7 +5,8 @@ import {usePrivy} from "@privy-io/expo";
 import {HomeScreen} from "./HomeScreen";
 import {LoginScreen} from "./LoginScreen";
 import {ProfileScreen} from "./ProfileScreen";
-import {pageAtom} from "../utils/navigation";
+import {pageAtom} from "../utils/atoms";
+import SearchScreen from "./SearchScreen";
 
 export const Wrapper = () => {
   const {user, isReady} = usePrivy();
@@ -33,6 +34,10 @@ export const Wrapper = () => {
 
   if (page === "profile") {
     return <ProfileScreen />;
+  }
+
+  if (page === "search") {
+    return <SearchScreen />;
   }
 
   return <HomeScreen />;

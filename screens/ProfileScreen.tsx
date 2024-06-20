@@ -1,6 +1,5 @@
 import {View, Text, ScrollView, Image} from "react-native";
 import {getUserEmbeddedWallet, usePrivy} from "@privy-io/expo";
-
 import {Button} from "../components/Button";
 import {useAtom} from "jotai";
 import {useEffect, useState} from "react";
@@ -8,7 +7,7 @@ import {useAlchemy} from "../providers/AlchemyProvider";
 import {AssetTransfersWithMetadataResult} from "alchemy-sdk";
 import {styles} from "../utils/styles";
 import {shortenAddress} from "../utils";
-import {pageAtom} from "../utils/navigation";
+import {pageAtom} from "../utils/atoms";
 import {Comment, TransactionWithComment} from "../utils/types";
 
 import {StyleSheet} from "react-native";
