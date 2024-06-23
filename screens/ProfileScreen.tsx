@@ -9,6 +9,12 @@ import {shortenAddress} from "../utils";
 import {pageAtom} from "../utils/atoms";
 import {Request, TransactionWithComment} from "../utils/types";
 
+function isRequest(
+  transaction: TransactionWithComment | Request,
+): transaction is Request {
+  return "status" in transaction;
+}
+
 export const ProfileScreen = () => {
   const {logout, user} = usePrivy();
   const [, setPage] = useAtom(pageAtom);
@@ -77,10 +83,11 @@ export const ProfileScreen = () => {
         })
         .catch((error) => {
           console.error("Error retrieving comments:", error);
+          return [];
         });
 
       const requestsReceived = await fetch(
-        `${process.env.EXPO_PUBLIC_REQUESTS_SENT_ENDPOINT}/${account?.address}`,
+        `${process.env.EXPO_PUBLIC_REQUESTS_RECEIVED_ENDPOINT}/${account?.address}`,
         {
           method: "GET",
           headers: {
@@ -91,13 +98,14 @@ export const ProfileScreen = () => {
         .then((response) => response.json())
         .then((data) => {
           console.log(
-            `Successfully retrieved requests from ${account?.address}`,
+            `Successfully retrieved requests for ${account?.address}`,
             data,
           );
           return data?.requests;
         })
         .catch((error) => {
-          console.error("Error retrieving comments:", error);
+          console.error("Error retrieving requests received:", error);
+          return [];
         });
       const combinedLogs = [
         ...sentLogsWithComments,
@@ -106,14 +114,14 @@ export const ProfileScreen = () => {
         ...(requestsReceived as Request[]),
       ];
       combinedLogs.sort((a, b) => {
-        const aTimestamp =
-          (a as TransactionWithComment)?.metadata?.blockTimestamp ??
-          (a as Request).timestamp;
-        const bTimestamp =
-          (b as TransactionWithComment)?.metadata?.blockTimestamp ??
-          (b as Request).timestamp;
+        const aTimestamp = isRequest(a)
+          ? parseFloat(a.timestamp)
+          : new Date(a.metadata?.blockTimestamp).getTime();
+        const bTimestamp = isRequest(b)
+          ? parseFloat(b.timestamp)
+          : new Date(b.metadata?.blockTimestamp).getTime();
 
-        return new Date(bTimestamp).getTime() - new Date(aTimestamp).getTime();
+        return bTimestamp - aTimestamp;
       });
       setTransactions(combinedLogs);
     };
@@ -141,6 +149,7 @@ export const ProfileScreen = () => {
           {transactions.map((transaction, index) => {
             const isRequest = "status" in transaction;
             if (isRequest) {
+              const isSend = transaction.origin === account?.address;
               return (
                 <View key={index} style={styles.transaction}>
                   <View style={styles.transactionRow}>
@@ -157,8 +166,12 @@ export const ProfileScreen = () => {
                         transaction.username ?? transaction.origin,
                       )}
                     </Text>
-                    <Text style={styles.valueReceive}>
-                      {`Request: $${transaction.amount}`}
+                    <Text
+                      style={isSend ? styles.valueReceive : styles.valueSend}
+                    >
+                      {"Requested: " +
+                        (isSend ? "+" : "-") +
+                        `$${parseFloat(transaction.amount)?.toFixed(2)}`}
                     </Text>
                   </View>
                   <View style={styles.transactionRow}>

@@ -17,6 +17,7 @@ import {useENS} from "../hooks/useENS";
 import {isAddress} from "viem";
 import {Account} from "../utils/types";
 import {usePayWithComment} from "../hooks/usePayWithComment";
+import {useSendRequest} from "../hooks/useSendRequest";
 
 const SearchScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,12 +25,13 @@ const SearchScreen = () => {
   const [recipient, setRecipient] = useState<Account | null>(null);
   const [comment, setComment] = useState<string | undefined>(undefined);
   // TODO prepopulate tx feed on login (atom)
-  const [recentAccounts, setRecentAccounts] = useState([]); // Populate this with your data
+  const [recentAccounts, setRecentAccounts] = useState([]); // Populate this with recent tx data
   const [, setPage] = useAtom(pageAtom);
   const [txType] = useAtom(txTypeAtom);
   const [amount] = useAtom(txAmountAtom);
   const {getAccountForAddress, getAccountForUsername} = useENS();
-  const {payWithComment, status} = usePayWithComment();
+  const {payWithComment, status: payStatus} = usePayWithComment();
+  const {sendRequest, status: requestStatus} = useSendRequest();
 
   // TODO: add debounce
   const searchForUser = useCallback(
@@ -72,11 +74,21 @@ const SearchScreen = () => {
     }
   }, [amount, comment, payWithComment, recipient]);
 
+  const handleRequest = useCallback(async () => {
+    if (recipient && amount) {
+      sendRequest({
+        recipient,
+        amount,
+        comment,
+      });
+    }
+  }, [amount, comment, recipient, sendRequest]);
+
   useEffect(() => {
-    if (status === "success") {
+    if (payStatus === "success") {
       setPage("home");
     }
-  }, [setPage, status]);
+  }, [setPage, payStatus]);
 
   return (
     <View style={styles.container}>
@@ -120,13 +132,13 @@ const SearchScreen = () => {
           if (txType === "pay") {
             handlePay();
           } else {
-            alert("Requesting is not yet implemented");
+            handleRequest();
           }
         }}
         style={recipient ? styles.actionButton : styles.disabledButton}
         disabled={!recipient}
       >
-        {status === "pending" ? (
+        {payStatus === "pending" || requestStatus === "pending" ? (
           <ActivityIndicator size="small" color="#fff" /> // Show spinner when status is pending
         ) : (
           <Text style={styles.buttonText}>

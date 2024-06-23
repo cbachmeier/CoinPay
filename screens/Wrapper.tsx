@@ -5,12 +5,18 @@ import {usePrivy} from "@privy-io/expo";
 import {HomeScreen} from "./HomeScreen";
 import {LoginScreen} from "./LoginScreen";
 import {ProfileScreen} from "./ProfileScreen";
-import {pageAtom} from "../utils/atoms";
+import {pageAtom, txAmountAtom} from "../utils/atoms";
 import SearchScreen from "./SearchScreen";
+import {useEffect} from "react";
 
 export const Wrapper = () => {
   const {user, isReady} = usePrivy();
   const [page] = useAtom(pageAtom);
+  const [, setAmount] = useAtom(txAmountAtom);
+
+  useEffect(() => {
+    setAmount("0");
+  }, [page, setAmount]);
 
   if (!isReady) {
     return (

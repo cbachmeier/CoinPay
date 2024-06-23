@@ -57,7 +57,6 @@ export const usePayWithComment = () => {
         await transactionResponse.wait(); // wait for transaction to be mined
         const payHash = transactionResponse.hash;
 
-        // Store the comment data in the localhost endpoint
         fetch(process.env.EXPO_PUBLIC_COMMENT_ENDPOINT, {
           method: "PUT",
           headers: {

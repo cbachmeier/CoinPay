@@ -1,10 +1,11 @@
 import {Text, View, TouchableOpacity} from "react-native";
-import {usePrivy} from "@privy-io/expo";
+import {useEmbeddedWallet, usePrivy} from "@privy-io/expo";
 import {Button} from "../components/Button";
 import {styles} from "../utils/styles";
 import {useAtom} from "jotai";
 import {useUSDCBalance} from "../hooks/useUSDCBalance";
 import {pageAtom, txAmountAtom, txTypeAtom} from "../utils/atoms";
+import {useEffect} from "react";
 
 export const HomeScreen = () => {
   const {user} = usePrivy();
@@ -12,6 +13,13 @@ export const HomeScreen = () => {
   const [, setPage] = useAtom(pageAtom);
   const [, setType] = useAtom(txTypeAtom);
   const {balance} = useUSDCBalance();
+  const wallet = useEmbeddedWallet();
+
+  useEffect(() => {
+    if (wallet.status === "not-created") {
+      wallet.create();
+    }
+  }, [wallet]);
 
   const handlePress = (val: string) => {
     setAmount((prevInput) => {
