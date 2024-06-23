@@ -2,23 +2,20 @@ import {View, Text, ScrollView, Image} from "react-native";
 import {getUserEmbeddedWallet, usePrivy} from "@privy-io/expo";
 import {Button} from "../components/Button";
 import {useAtom} from "jotai";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {useAlchemy} from "../providers/AlchemyProvider";
-import {AssetTransfersWithMetadataResult} from "alchemy-sdk";
 import {styles} from "../utils/styles";
 import {shortenAddress} from "../utils";
 import {pageAtom} from "../utils/atoms";
-import {Comment, TransactionWithComment} from "../utils/types";
-
-import {StyleSheet} from "react-native";
+import {Request, TransactionWithComment} from "../utils/types";
 
 export const ProfileScreen = () => {
   const {logout, user} = usePrivy();
   const [, setPage] = useAtom(pageAtom);
   const account = getUserEmbeddedWallet(user);
-  const [transactions, setTransactions] = useState<TransactionWithComment[]>(
-    [],
-  );
+  const [transactions, setTransactions] = useState<
+    (TransactionWithComment | Request)[]
+  >([]);
   const alchemy = useAlchemy();
 
   useEffect(() => {
@@ -60,17 +57,74 @@ export const ProfileScreen = () => {
         category: ["erc20"],
         withMetadata: true,
       });
-      const combinedLogs = [...sentLogsWithComments, ...receivedLogs.transfers];
-      combinedLogs.sort(
-        (a, b) =>
-          new Date(b.metadata.blockTimestamp).getTime() -
-          new Date(a.metadata.blockTimestamp).getTime(),
-      );
+
+      const requestsSent = await fetch(
+        `${process.env.EXPO_PUBLIC_REQUESTS_SENT_ENDPOINT}/${account?.address}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(
+            `Successfully retrieved requests from ${account?.address}`,
+            data,
+          );
+          return data?.requests;
+        })
+        .catch((error) => {
+          console.error("Error retrieving comments:", error);
+        });
+
+      const requestsReceived = await fetch(
+        `${process.env.EXPO_PUBLIC_REQUESTS_SENT_ENDPOINT}/${account?.address}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(
+            `Successfully retrieved requests from ${account?.address}`,
+            data,
+          );
+          return data?.requests;
+        })
+        .catch((error) => {
+          console.error("Error retrieving comments:", error);
+        });
+      const combinedLogs = [
+        ...sentLogsWithComments,
+        ...receivedLogs.transfers,
+        ...(requestsSent as Request[]),
+        ...(requestsReceived as Request[]),
+      ];
+      combinedLogs.sort((a, b) => {
+        const aTimestamp =
+          (a as TransactionWithComment)?.metadata?.blockTimestamp ??
+          (a as Request).timestamp;
+        const bTimestamp =
+          (b as TransactionWithComment)?.metadata?.blockTimestamp ??
+          (b as Request).timestamp;
+
+        return new Date(bTimestamp).getTime() - new Date(aTimestamp).getTime();
+      });
       setTransactions(combinedLogs);
     };
 
     getLogs();
   }, [account, alchemy.core]);
+
+  const handleLogout = useCallback(() => {
+    setPage("home");
+    logout();
+  }, [logout, setPage]);
 
   if (!user) {
     return null;
@@ -79,12 +133,45 @@ export const ProfileScreen = () => {
   return (
     <View style={styles.container}>
       <Button onPress={() => setPage("home")}>Back</Button>
-      <Button onPress={logout}>Logout</Button>
+      <Button onPress={handleLogout}>Logout</Button>
       <Text>{account?.address}</Text>
       <View style={styles.topHalf}></View>
       <View style={styles.bottomHalf}>
         <ScrollView>
           {transactions.map((transaction, index) => {
+            const isRequest = "status" in transaction;
+            if (isRequest) {
+              return (
+                <View key={index} style={styles.transaction}>
+                  <View style={styles.transactionRow}>
+                    <Image
+                      source={{uri: transaction.avatar || undefined}}
+                      style={
+                        transaction.avatar
+                          ? styles.avatar
+                          : styles.avatarPlaceholder
+                      }
+                    />
+                    <Text style={styles.address}>
+                      {shortenAddress(
+                        transaction.username ?? transaction.origin,
+                      )}
+                    </Text>
+                    <Text style={styles.valueReceive}>
+                      {`Request: $${transaction.amount}`}
+                    </Text>
+                  </View>
+                  <View style={styles.transactionRow}>
+                    <Text style={styles.description}>
+                      {transaction.comment}
+                    </Text>
+                  </View>
+                  {index !== transactions.length - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </View>
+              );
+            }
             const isSend = transaction.from === account?.address.toLowerCase();
             return (
               <View key={index} style={styles.transaction}>

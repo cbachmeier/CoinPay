@@ -20,6 +20,7 @@ export type Request = {
   username?: string;
   comment?: string;
   status: "pending" | "paid" | "declined";
+  timestamp: string;
 };
 
 export type Comment = {
