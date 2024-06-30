@@ -4,7 +4,7 @@ import {
   useEmbeddedWallet,
   usePrivy,
 } from "@privy-io/expo";
-import {Account} from "../utils/types";
+import {Account, Request} from "../utils/types";
 import {v4 as uuidv4} from "uuid";
 
 export const useSendRequest = () => {
@@ -96,5 +96,110 @@ export const useSendRequest = () => {
     },
     [wallet, account?.address],
   );
-  return {sendRequest, status};
+
+  const denyRequest = useCallback((req: Request) => {
+    try {
+      fetch(
+        `${process.env.EXPO_PUBLIC_REQUESTS_SENT_ENDPOINT}/${req.origin}/${req.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            origin: req.origin,
+            id: req.id,
+            status: "declined",
+          }),
+        },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success denying requests sent:", data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+      fetch(
+        `${process.env.EXPO_PUBLIC_REQUESTS_RECEIVED_ENDPOINT}/${req.recipient}/${req.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            recipient: req.recipient,
+            id: req.id,
+            status: "declined",
+          }),
+        },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success denying requests received:", data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+
+      setStatus("success");
+    } catch (e) {
+      setStatus("error");
+      console.error(e);
+    }
+  }, []);
+
+  const payRequest = useCallback((req: Request) => {
+    try {
+      fetch(
+        `${process.env.EXPO_PUBLIC_REQUESTS_SENT_ENDPOINT}/${req.origin}/${req.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            origin: req.origin,
+            id: req.id,
+            status: "paid",
+          }),
+        },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success paying requests sent:", data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+      fetch(
+        `${process.env.EXPO_PUBLIC_REQUESTS_RECEIVED_ENDPOINT}/${req.recipient}/${req.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            recipient: req.recipient,
+            id: req.id,
+            status: "paid",
+          }),
+        },
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success paying requests received:", data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+
+      setStatus("success");
+    } catch (e) {
+      setStatus("error");
+      console.error(e);
+    }
+  }, []);
+
+  return {sendRequest, status, denyRequest, payRequest};
 };

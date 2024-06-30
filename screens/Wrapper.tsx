@@ -15,7 +15,9 @@ export const Wrapper = () => {
   const [, setAmount] = useAtom(txAmountAtom);
 
   useEffect(() => {
-    setAmount("0");
+    if (page !== "search") {
+      setAmount("0");
+    }
   }, [page, setAmount]);
 
   if (!isReady) {

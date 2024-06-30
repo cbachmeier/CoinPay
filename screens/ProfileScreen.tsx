@@ -1,4 +1,4 @@
-import {View, Text, ScrollView, Image} from "react-native";
+import {View, Text, ScrollView, Image, ActivityIndicator} from "react-native";
 import {getUserEmbeddedWallet, usePrivy} from "@privy-io/expo";
 import {Button} from "../components/Button";
 import {useAtom} from "jotai";
@@ -8,6 +8,9 @@ import {styles} from "../utils/styles";
 import {shortenAddress} from "../utils";
 import {pageAtom} from "../utils/atoms";
 import {Request, TransactionWithComment} from "../utils/types";
+import {useSendRequest} from "../hooks/useSendRequest";
+import {usePayWithComment} from "../hooks/usePayWithComment";
+import {isAddress} from "viem";
 
 function isRequest(
   transaction: TransactionWithComment | Request,
@@ -23,6 +26,15 @@ export const ProfileScreen = () => {
     (TransactionWithComment | Request)[]
   >([]);
   const alchemy = useAlchemy();
+  const {payRequest, denyRequest, status: reqUpdateStatus} = useSendRequest();
+  const {payWithComment, status: payStatus} = usePayWithComment();
+  const [buttonPressed, setButtonPressed] = useState<
+    | {
+        req: string;
+        action: "pay" | "decline";
+      }
+    | undefined
+  >(undefined);
 
   useEffect(() => {
     const getLogs = async () => {
@@ -79,7 +91,7 @@ export const ProfileScreen = () => {
             `Successfully retrieved requests from ${account?.address}`,
             data,
           );
-          return data?.requests;
+          return data?.requests.filter((r: Request) => r.status !== "paid");
         })
         .catch((error) => {
           console.error("Error retrieving comments:", error);
@@ -101,7 +113,7 @@ export const ProfileScreen = () => {
             `Successfully retrieved requests for ${account?.address}`,
             data,
           );
-          return data?.requests;
+          return data?.requests.filter((r: Request) => r.status !== "paid");
         })
         .catch((error) => {
           console.error("Error retrieving requests received:", error);
@@ -126,13 +138,47 @@ export const ProfileScreen = () => {
       setTransactions(combinedLogs);
     };
 
-    getLogs();
-  }, [account, alchemy.core]);
+    if (
+      !payStatus ||
+      payStatus === "success" ||
+      !reqUpdateStatus ||
+      reqUpdateStatus === "success"
+    ) {
+      getLogs();
+    }
+  }, [account, alchemy.core, payStatus, reqUpdateStatus]);
 
   const handleLogout = useCallback(() => {
     setPage("home");
     logout();
   }, [logout, setPage]);
+
+  const handleDeclineRequest = useCallback(
+    (req: Request) => {
+      setButtonPressed({req: req.id, action: "decline"});
+      denyRequest(req);
+    },
+    [denyRequest],
+  );
+
+  const handlePayRequest = useCallback(
+    (req: Request) => {
+      setButtonPressed({req: req.id, action: "pay"});
+      payRequest(req);
+      if (account?.address && isAddress(account?.address)) {
+        payWithComment({
+          recipient: {
+            address: account.address,
+            avatar: req.avatar,
+            username: req.username,
+          },
+          amount: req.amount,
+          comment: req.comment,
+        });
+      }
+    },
+    [account?.address, payRequest, payWithComment],
+  );
 
   if (!user) {
     return null;
@@ -169,7 +215,7 @@ export const ProfileScreen = () => {
                     <Text
                       style={isSend ? styles.valueReceive : styles.valueSend}
                     >
-                      {"Requested: " +
+                      {`${transaction.status === "declined" ? "Declined" : "Requested"}: ` +
                         (isSend ? "+" : "-") +
                         `$${parseFloat(transaction.amount)?.toFixed(2)}`}
                     </Text>
@@ -178,6 +224,55 @@ export const ProfileScreen = () => {
                     <Text style={styles.description}>
                       {transaction.comment}
                     </Text>
+                    {transaction.recipient === account?.address &&
+                      transaction.status === "pending" && (
+                        <View
+                          style={{
+                            width: "50%",
+                            flexWrap: "nowrap",
+                            flexDirection: "row",
+                            justifyContent: "flex-end",
+                          }}
+                        >
+                          <Button
+                            style={{
+                              backgroundColor: "#90EE90",
+                              width: 80,
+                            }}
+                            onPress={() => handlePayRequest(transaction)}
+                            disabled={
+                              reqUpdateStatus === "pending" ||
+                              payStatus === "pending"
+                            }
+                          >
+                            {(reqUpdateStatus === "pending" ||
+                              payStatus === "pending") &&
+                            buttonPressed?.action === "pay" &&
+                            buttonPressed.req === transaction.id ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              "Pay"
+                            )}
+                          </Button>
+                          <Button
+                            style={{
+                              backgroundColor: "red",
+                              marginLeft: 10,
+                              width: 80,
+                            }}
+                            onPress={() => handleDeclineRequest(transaction)}
+                            disabled={reqUpdateStatus === "pending"}
+                          >
+                            {reqUpdateStatus === "pending" &&
+                            buttonPressed?.action === "decline" &&
+                            buttonPressed.req === transaction.id ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              "Decline"
+                            )}
+                          </Button>
+                        </View>
+                      )}
                   </View>
                   {index !== transactions.length - 1 && (
                     <View style={styles.divider} />

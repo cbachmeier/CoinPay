@@ -21,6 +21,7 @@ export type Request = {
   comment?: string;
   status: "pending" | "paid" | "declined";
   timestamp: string;
+  id: string;
 };
 
 export type Comment = {
